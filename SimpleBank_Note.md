@@ -1,4 +1,4 @@
-# dockNote
+# Note
 
 ## 功能
 
@@ -138,9 +138,102 @@ migratedown:
 .PHONY: postgres createdb dropdb migrateup migratedown
 ```
 
+## G enerate CRUD  golang code
 
+1. 低级标准库`database/sql`
 
+   - 优点：快速、简单
+   - 缺点：必须手动将sql字段映射到变量
 
+2. `GORM`高级对象关系映射库
+
+   - 所有CRUD已经被实现，代码短，只需声明模型，调用函数
+   - 存在学习成本
+   - 流量高时运行慢
+
+3. `sqlx`
+
+   - 快速简单
+   - 字段映射通过查询文本或结构标签完成
+   - 错误只能在运行时捕获
+
+4. `sqlc`
+
+   - 快速简单
+
+   - 只需编写sql查询，自动生成CRUD代码
+
+     将DB schema和sql查询传递给sqlc，每个查询顶部有一个注释，告诉sqlc正确的函数签名
+
+   -  能立刻发现错误
+
+   - 目前支持mysql、postgresql
+
+### sqlc
+
+```bash
+sqlc help
+Usage:
+  sqlc [command]
+
+Available Commands:
+  compile     Statically check SQL for syntax and type errors
+  completion  Generate the autocompletion script for the specified shell
+  createdb    Create an ephemeral database
+  diff        Compare the generated files to the existing files
+  generate    Generate source code from SQL
+  help        Help about any command
+  init        Create an empty sqlc.yaml settings file
+  push        Push the schema, queries, and configuration for this project
+  verify      Verify schema, queries, and configuration for this project
+  version     Print the sqlc version number
+  vet         Vet examines queries
+
+Flags:
+  -x, --experimental   DEPRECATED: enable experimental features (default: false)
+  -f, --file string    specify an alternate config file (default: sqlc.yaml)
+  -h, --help           help for sqlc
+      --no-remote      disable remote execution (default: false)
+      --remote         enable remote execution (default: false)
+
+Use "sqlc [command] --help" for more information about a command.
+```
+
+ 配置`sqlc.yaml`
+
+```yaml
+# 模板
+version: "2"
+sql:
+  - engine: "postgresql"
+    queries: "query.sql"
+    schema: "schema.sql"
+    gen:
+      go:
+        package: "tutorial"
+        out: "tutorial"
+        sql_package: "pgx/v5"
+```
+
+初始化: `sqlc init`
+
+编写`query.sql`
+
+```sql
+-- name: CreateAccount :one
+INSERT INTO accounts (
+  owner,
+  balance,
+  currency
+) VALUES (
+  $1, $2, $3
+)
+RETURNING *;
+```
+
+生成: `sqlc generate`
+
+集成进Makefile
 
 
 
